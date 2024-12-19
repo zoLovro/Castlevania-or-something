@@ -1,24 +1,61 @@
 import pygame as pg
+from classes import Player, Object
+
+pg.init()
 
 size = (700, 500)
-screen = pygame.display.set_mode(size)
+screen = pg.display.set_mode(size)
 
-pygame.display.set_caption("My Game")
+BLACK = (0, 0, 0)
 
-# Used to manage how fast the screen updates
-clock = pygame.time.Clock()
+pg.display.set_caption("Castlevania but better")
 
-while True:
+# --- Used to manage how fast the screen updates
+clock = pg.time.Clock()
 
+# --- Global gravity
+gravity = 1.01
+
+# --- Player
+player = Player(100, 100)
+collision = False
+
+
+# --- Objects
+object = Object(100, 300)
+
+# --- Main loop
+running = True
+while running:
     # --- Events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            running = False
 
-    # ---Background
-    screen.fill(WHITE)
 
-    pygame.display.flip()
+    # --- Player logic
+    if not collision:
+        player.y *= gravity 
+    else:
+        player.y /= gravity
+    player.update_position()
+
+    # --- Collision logic
+    colliding = player.rect.colliderect(object.rect)
+    if colliding:
+        collision = True
+    else:
+        # --- Background
+        screen.fill(BLACK)
+
+
+    # --- Making stuff appear
+    screen.blit(object.image, object.rect.topleft)
+    screen.blit(player.image, player.rect.topleft)
+
+
+    pg.display.flip()
     clock.tick(60)
 
-pygame.quit()
+
+pg.quit()
