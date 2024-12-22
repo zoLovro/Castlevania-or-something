@@ -15,9 +15,8 @@ class Player(pg.sprite.Sprite):
 
         # --- Movement
         self.vertical_speed = 0
-        self.horizontal_speed = 0
+        self.horizontal_speed = 2
         self.vertical_acc = 1.1
-        self.horizontal_acc = 1.1
         self.jumping_acc = 5
         self.max_speed = 3
 

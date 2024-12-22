@@ -36,20 +36,18 @@ while running:
     # --- Collision logic
     colliding = player.rect.colliderect(object.rect)
     if colliding:
-        player.vertical_speed = 1
+        player.vertical_speed = 0
 
     # --- Sideways movement logic
     keys = pg.key.get_pressed()
     if keys[pg.K_LEFT]:
-        if player.horizontal_speed < player.max_speed:
-            player.horizontal_speed += player.horizontal_acc
         player.x -= player.horizontal_speed
         moving = True
     if keys[pg.K_RIGHT]:
-        if player.horizontal_speed < player.max_speed:
-            player.horizontal_speed += player.horizontal_acc
         player.x += player.horizontal_speed
         moving = True
+    else:
+        moving = False
     print(player.horizontal_speed)
 
     # --- Jumping logic
@@ -57,10 +55,6 @@ while running:
         if keys[pg.K_UP]:
             player.vertical_speed += player.jumping_acc
             player.y -= player.vertical_speed
-
-
-    if not moving:
-        player.horizontal_speed = 0
 
 
     # --- Gravity logic
