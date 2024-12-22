@@ -3,7 +3,7 @@ from classes import Player, Object
 
 pg.init()
 
-size = (700, 500)
+size = (1000, 500)
 screen = pg.display.set_mode(size)
 
 BLACK = (0, 0, 0)
@@ -18,11 +18,12 @@ gravity = 1.01
 
 # --- Player
 player = Player(100, 100)
-collision = False
+player_collision = False
+moving = False
 
 
 # --- Objects
-object = Object(100, 300)
+object = Object(100, 450)
 
 # --- Main loop
 running = True
@@ -32,21 +33,47 @@ while running:
         if event.type == pg.QUIT:
             running = False
 
-
-    # --- Player logic
-    if not collision:
-        player.y *= gravity 
-    else:
-        player.y /= gravity
-    player.update_position()
-
     # --- Collision logic
     colliding = player.rect.colliderect(object.rect)
     if colliding:
-        collision = True
-    else:
-        # --- Background
-        screen.fill(BLACK)
+        player.vertical_speed = 1
+
+    # --- Sideways movement logic
+    keys = pg.key.get_pressed()
+    if keys[pg.K_LEFT]:
+        if player.horizontal_speed < player.max_speed:
+            player.horizontal_speed += player.horizontal_acc
+        player.x -= player.horizontal_speed
+        moving = True
+    if keys[pg.K_RIGHT]:
+        if player.horizontal_speed < player.max_speed:
+            player.horizontal_speed += player.horizontal_acc
+        player.x += player.horizontal_speed
+        moving = True
+    print(player.horizontal_speed)
+
+    # --- Jumping logic
+    if colliding:
+        if keys[pg.K_UP]:
+            player.vertical_speed += player.jumping_acc
+            player.y -= player.vertical_speed
+
+
+    if not moving:
+        player.horizontal_speed = 0
+
+
+    # --- Gravity logic
+    if not colliding:
+        player.vertical_speed += player.vertical_acc
+        player.y += player.vertical_speed
+
+
+    player.update_position()
+
+
+    # --- Background
+    screen.fill(BLACK)
 
 
     # --- Making stuff appear
