@@ -1,5 +1,5 @@
 import pygame as pg
-from classes import Player, Object
+from classes import Player, Object, Camera
 
 pg.init()
 
@@ -24,6 +24,10 @@ moving = False
 
 # --- Objects
 object = Object(100, 450)
+
+
+# --- Camera
+camera = Camera(player, size[0], size[1])
 
 # --- Main loop
 running = True
@@ -64,6 +68,7 @@ while running:
 
 
     player.update_position()
+    camera.update()
 
 
     # --- Background
@@ -71,8 +76,8 @@ while running:
 
 
     # --- Making stuff appear
-    screen.blit(object.image, object.rect.topleft)
-    screen.blit(player.image, player.rect.topleft)
+    object.render(screen, camera)
+    player.render(screen, camera)
 
 
     pg.display.flip()
