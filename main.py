@@ -18,23 +18,26 @@ clock = pg.time.Clock()
 gravity = 1.01
 
 # --- Player
-player = Player(100, 100)
+player = Player(100, 500)
 player_collision = False
 moving = False
 
 
-# --- Objects
+# --- Objects --- 
 object = Object(100, 630)
+
+# --- Groups ---
+player_group = pg.sprite.Group()
 
 
 # --- Camera
 camera = Camera(player, size[0], size[1])
 
-# --- Levels
+# --- Levels ---
 entrance = Entrance()
 entrance_bg = Entrance_bg()
 
-# --- Main loop
+##################################################### MAIN LOOP ######################################
 running = True
 while running:
     # --- Events
@@ -42,10 +45,21 @@ while running:
         if event.type == pg.QUIT:
             running = False
 
+############################################### LOGIC ###############################################
     # --- Collision logic
-    colliding = player.rect.colliderect(entrance.rect)
+    offset = (entrance.rect.x - player.rect.x, entrance.rect.y - player.rect.y)
+    colliding = player.mask.overlap(entrance.mask, offset)
+    print(colliding)
     if colliding:
+        #player.y = entrance.rect.y + colliding[1] - player.rect.height
         player.vertical_speed = 0
+        player.isJump = False
+
+    # --- Gravity logic
+    if not colliding:
+        player.vertical_speed += player.vertical_acc
+        player.y += player.vertical_speed
+
 
 ############################################### INPUT ###############################################
     keys = pg.key.get_pressed()
@@ -58,7 +72,6 @@ while running:
     else:
         moving = False
 
-############################################### LOGIC ###############################################
     # --- Jumping logic
     if colliding:
         if not player.isJump:
@@ -67,20 +80,13 @@ while running:
     if player.isJump:
         player.jump()
 
-
-    # --- Gravity logic
-    if not colliding:
-        player.vertical_speed += player.vertical_acc
-        player.y += player.vertical_speed
-
-
     player.update_position()
     camera.update()
 
-
 ############################################### RENDERS ###############################################
     # --- BACKGROUND --- 
-    entrance_bg.render(screen, camera)
+    #entrance_bg.render(screen, camera)
+    screen.fill(BLACK)
 
     # --- PLAYER AND OBJECTS ---
     entrance.render(screen, camera)

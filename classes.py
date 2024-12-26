@@ -11,6 +11,8 @@ class Player(pg.sprite.Sprite):
         # --- Image stuff
         self.image = player_png
         self.rect = self.image.get_rect()
+        self.mask = pg.mask.from_surface(self.image)
+        self.mask_image = self.mask.to_surface()
 
         # --- Positional stuff
         self.x = x
@@ -19,7 +21,7 @@ class Player(pg.sprite.Sprite):
 
         # --- Movement
         self.vertical_speed = 0
-        self.horizontal_speed = 2
+        self.horizontal_speed = 5
         self.vertical_acc = 1.1
         self.max_speed = 3
 
@@ -40,7 +42,7 @@ class Player(pg.sprite.Sprite):
     
     def render(self, screen, camera):
         render_rect = camera.apply(self.rect)
-        screen.blit(self.image, render_rect.topleft)
+        screen.blit(self.mask_image, render_rect.topleft)
 
 
 class Object():
