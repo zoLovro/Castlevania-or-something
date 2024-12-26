@@ -1,9 +1,10 @@
 import pygame as pg
 from classes import Player, Object, Camera
+from lvl_1 import Entrance, Entrance_bg
 
 pg.init()
 
-size = (1000, 500)
+size = (750, 750)
 screen = pg.display.set_mode(size)
 
 BLACK = (0, 0, 0)
@@ -23,11 +24,15 @@ moving = False
 
 
 # --- Objects
-object = Object(100, 450)
+object = Object(100, 630)
 
 
 # --- Camera
 camera = Camera(player, size[0], size[1])
+
+# --- Levels
+entrance = Entrance()
+entrance_bg = Entrance_bg()
 
 # --- Main loop
 running = True
@@ -38,11 +43,11 @@ while running:
             running = False
 
     # --- Collision logic
-    colliding = player.rect.colliderect(object.rect)
+    colliding = player.rect.colliderect(entrance.rect)
     if colliding:
         player.vertical_speed = 0
 
-    # --- Sideways movement logic
+############################################### INPUT ###############################################
     keys = pg.key.get_pressed()
     if keys[pg.K_LEFT]:
         player.x -= player.horizontal_speed
@@ -52,13 +57,15 @@ while running:
         moving = True
     else:
         moving = False
-    print(player.horizontal_speed)
 
+############################################### LOGIC ###############################################
     # --- Jumping logic
     if colliding:
-        if keys[pg.K_UP]:
-            player.vertical_speed += player.jumping_acc
-            player.y -= player.vertical_speed
+        if not player.isJump:
+            if keys[pg.K_UP]:
+                player.isJump = True
+    if player.isJump:
+        player.jump()
 
 
     # --- Gravity logic
@@ -71,12 +78,12 @@ while running:
     camera.update()
 
 
-    # --- Background
-    screen.fill(BLACK)
+############################################### RENDERS ###############################################
+    # --- BACKGROUND --- 
+    entrance_bg.render(screen, camera)
 
-
-    # --- Making stuff appear
-    object.render(screen, camera)
+    # --- PLAYER AND OBJECTS ---
+    entrance.render(screen, camera)
     player.render(screen, camera)
 
 

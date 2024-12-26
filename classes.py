@@ -3,6 +3,7 @@ from pngs import player_png, rectangle_png
 
 size = (1000, 500)
 screen = pg.display.set_mode(size)
+gravity = 1
 
 class Player(pg.sprite.Sprite):
     def __init__(self, x, y):
@@ -10,7 +11,7 @@ class Player(pg.sprite.Sprite):
         # --- Image stuff
         self.image = player_png
         self.rect = self.image.get_rect()
-        
+
         # --- Positional stuff
         self.x = x
         self.y = y
@@ -20,16 +21,26 @@ class Player(pg.sprite.Sprite):
         self.vertical_speed = 0
         self.horizontal_speed = 2
         self.vertical_acc = 1.1
-        self.jumping_acc = 5
         self.max_speed = 3
 
+        # --- Jumping
+        self.isJump = False
+        self.jump_height = 20
+        self.y_velocity = self.jump_height
+
+    def jump(self):
+        self.y -= self.y_velocity
+        self.y_velocity -= gravity
+        if self.y_velocity < -self.jump_height:
+            self.isJump = False
+            self.y_velocity = self.jump_height
 
     def update_position(self):
         self.rect.topleft = (self.x, self.y)
     
     def render(self, screen, camera):
         render_rect = camera.apply(self.rect)
-        screen.blit(self.image, self.rect.topleft)
+        screen.blit(self.image, render_rect.topleft)
 
 
 class Object():
@@ -41,7 +52,7 @@ class Object():
 
     def render(self, screen, camera):
         render_rect = camera.apply(self.rect)
-        screen.blit(self.image, self.rect.topleft)
+        screen.blit(self.image, render_rect.topleft)
         
 class Camera:
     def __init__(self, target, screen_width, screen_height):
@@ -53,8 +64,7 @@ class Camera:
 
     def update(self):
         self.offset_x = self.target.x - self.screen_width // 2
-        self.offset_y = self.target.y - self.screen_height // 2
+        self.offset_y = 0
 
     def apply(self, rect):
         return rect.move(-self.offset_x, -self.offset_y)
-
