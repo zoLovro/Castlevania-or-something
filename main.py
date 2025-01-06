@@ -1,11 +1,12 @@
 import pygame as pg
-from classes import Player, Object, Camera
-from lvl_1 import Entrance, Entrance_bg
+from classes import Player, Camera
+from levels import Floor, Level1, BreakableTile
 
 pg.init()
 
-size = (750, 750)
+size = (600, 600)
 screen = pg.display.set_mode(size)
+lvl_width = 3075
 
 BLACK = (0, 0, 0)
 
@@ -15,28 +16,40 @@ pg.display.set_caption("Castlevania but better")
 clock = pg.time.Clock()
 
 # --- Global gravity
-gravity = 1.01
+gravity = 0.8
 
 # --- Player
-player = Player(100, 500)
+player = Player(100, 300)
 player_collision = False
 moving = False
 
+# --- Floor --- 
+exclusions = []
+lvlFloorPos = [(x, 510) for x in range(0, 1920, 60)
+                if not any(start <= x <= end for start, end in exclusions)]
+floor_group = pg.sprite.Group()
+for pos in lvlFloorPos:
+    floor = Floor(pos[0], pos[1])
+    floor_group.add(floor)
 
-# --- Objects --- 
-object = Object(100, 630)
+# --- Breakable tiles ---
+breakablePos = [(2028, 458), (2078, 458), (2128, 458), (2178, 458)]
+breakableTiles_group = pg.sprite.Group()
+for pos in breakablePos:
+    breakableTile = BreakableTile(pos[0], pos[1])
+    breakableTiles_group.add(breakableTile)
+
+# --- Stairs ---
+
 
 # --- Groups ---
 player_group = pg.sprite.Group()
 
-
-# --- Camera
-camera = Camera(player, size[0], size[1])
+# --- Camera ---
+camera = Camera(player, size[0], size[1], boundaries=(0, lvl_width))
 
 # --- Levels ---
-entrance = Entrance()
-entrance_bg = Entrance_bg()
-
+level1 = Level1(0, 0)
 ##################################################### MAIN LOOP ######################################
 running = True
 while running:
@@ -47,19 +60,14 @@ while running:
 
 ############################################### LOGIC ###############################################
     # --- Collision logic
-    offset = (entrance.rect.x - player.rect.x, entrance.rect.y - player.rect.y)
-    colliding = player.mask.overlap(entrance.mask, offset)
-    print(colliding)
-    if colliding:
-        #player.y = entrance.rect.y + colliding[1] - player.rect.height
-        player.vertical_speed = 0
-        player.isJump = False
-
-    # --- Gravity logic
-    if not colliding:
-        player.vertical_speed += player.vertical_acc
-        player.y += player.vertical_speed
-
+    collided_floor = pg.sprite.spritecollide(player, floor_group, False)
+    if collided_floor:
+        closest_floor = min(collided_floor, key=lambda floor: abs(player.rect.bottom - floor.rect.top))
+        player.vertical_velocity = 0
+        player.y = closest_floor.rect.top - player.rect.height
+    else:
+        player.vertical_velocity += gravity
+        player.y += player.vertical_velocity
 
 ############################################### INPUT ###############################################
     keys = pg.key.get_pressed()
@@ -73,7 +81,7 @@ while running:
         moving = False
 
     # --- Jumping logic
-    if colliding:
+    if collided_floor:
         if not player.isJump:
             if keys[pg.K_UP]:
                 player.isJump = True
@@ -85,13 +93,19 @@ while running:
 
 ############################################### RENDERS ###############################################
     # --- BACKGROUND --- 
-    #entrance_bg.render(screen, camera)
     screen.fill(BLACK)
 
-    # --- PLAYER AND OBJECTS ---
-    entrance.render(screen, camera)
-    player.render(screen, camera)
+    # --- PLAYMAPS ---
+    level1.render(screen, camera)
 
+    # --- PLAYER AND OBJECTS ---
+    for floor in floor_group:
+        adjusted_floor_rect = camera.apply(floor.rect)
+        screen.blit(floor.image, adjusted_floor_rect.topleft)
+    for tile in breakableTiles_group:
+        adjusted_btile_rect = camera.apply(tile.rect)
+        screen.blit(tile.image, adjusted_btile_rect.topleft)
+    player.render(screen, camera)
 
     pg.display.flip()
     clock.tick(60)
