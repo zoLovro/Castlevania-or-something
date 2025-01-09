@@ -26,15 +26,15 @@ class Player(pg.sprite.Sprite):
         self.max_speed = 3
 
         # --- Jumping
-        self.isJump = False
+        self.canJump = False
         self.jump_height = 20
         self.y_velocity = self.jump_height
 
     def jump(self):
         self.y -= self.y_velocity
         self.y_velocity -= gravity
-        if self.y_velocity < -self.jump_height:
-            self.isJump = False
+        if self.y_velocity <= 0:
+            self.canJump = False
             self.y_velocity = self.jump_height
 
     def update_position(self):

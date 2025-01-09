@@ -1,6 +1,7 @@
 import pygame as pg
 from classes import Player, Camera
-from levels import Floor, Level1, BreakableTile
+from levels import Floor, Level1
+from levelmechanics import BreakableTile
 
 pg.init()
 
@@ -19,9 +20,10 @@ clock = pg.time.Clock()
 gravity = 0.8
 
 # --- Player
-player = Player(100, 300)
+player = Player(100, 400)
 player_collision = False
 moving = False
+jumpCheck = False
 
 # --- Floor --- 
 exclusions = []
@@ -61,13 +63,19 @@ while running:
 ############################################### LOGIC ###############################################
     # --- Collision logic
     collided_floor = pg.sprite.spritecollide(player, floor_group, False)
-    if collided_floor:
-        closest_floor = min(collided_floor, key=lambda floor: abs(player.rect.bottom - floor.rect.top))
+    closest_floor = min(floor_group, key=lambda tile: abs(tile.rect.centerx - player.rect.centerx))
+    if player.rect.colliderect(closest_floor.rect):
         player.vertical_velocity = 0
         player.y = closest_floor.rect.top - player.rect.height
+        player.jumpCheck = False
     else:
+        # Apply gravity if no collision
         player.vertical_velocity += gravity
         player.y += player.vertical_velocity
+    # Prevent overshooting the floor during collision
+    if collided_floor:
+        for floor in collided_floor:
+            player.y = min(player.y, floor.rect.top - player.rect.height)
 
 ############################################### INPUT ###############################################
     keys = pg.key.get_pressed()
@@ -81,13 +89,16 @@ while running:
         moving = False
 
     # --- Jumping logic
-    if collided_floor:
-        if not player.isJump:
-            if keys[pg.K_UP]:
-                player.isJump = True
-    if player.isJump:
+    if collided_floor and not player.canJump:
+        if keys[pg.K_UP]:
+            player.canJump = True
+    if player.canJump:
         player.jump()
+        jumpCheck = True
+    if player.rect.colliderect(closest_floor.rect) and jumpCheck:
+        jumpCheck = False
 
+    print(player.canJump)
     player.update_position()
     camera.update()
 
@@ -95,16 +106,20 @@ while running:
     # --- BACKGROUND --- 
     screen.fill(BLACK)
 
-    # --- PLAYMAPS ---
-    level1.render(screen, camera)
+    # # --- PLAYMAPS ---
+    # level1.render(screen, camera)
 
     # --- PLAYER AND OBJECTS ---
-    for floor in floor_group:
-        adjusted_floor_rect = camera.apply(floor.rect)
-        screen.blit(floor.image, adjusted_floor_rect.topleft)
     for tile in breakableTiles_group:
         adjusted_btile_rect = camera.apply(tile.rect)
         screen.blit(tile.image, adjusted_btile_rect.topleft)
+    for floor in floor_group:
+        adjusted_floor_rect = camera.apply(floor.rect)
+        screen.blit(floor.image, adjusted_floor_rect.topleft)
+
+# --- PLAYMAPS ---
+    level1.render(screen, camera)
+    
     player.render(screen, camera)
 
     pg.display.flip()
