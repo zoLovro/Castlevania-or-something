@@ -1,4 +1,10 @@
 import pygame as pg
 
-player_png = pg.image.load("data/pngs/player/red_circle.png")
+##################################################### SPRITESHEETS ######################################
+idle_png = pg.image.load("data/pngs/player/spritesheets/idle.png")
+
+
+
+
+
 rectangle_png = pg.image.load("data/pngs/objects/floor.png")
