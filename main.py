@@ -1,7 +1,7 @@
 import pygame as pg
 from classes import Player, Camera
 from levels import Level1
-from levelmechanics import BreakableTile, Floor
+from levelmechanics import BreakableTile, Floor, FloatingTile
 from pngs import idle_png
 
 pg.init()
@@ -28,7 +28,7 @@ moving_left = False
 jumpCheck = False
 
 
-# --- Floor --- 
+# --- FLOOR --- 
 exclusions = []
 lvlFloorPos = [(x, 510) for x in range(0, 1920, 60)
                 if not any(start <= x <= end for start, end in exclusions)]
@@ -37,19 +37,26 @@ for pos in lvlFloorPos:
     floor = Floor(pos[0], pos[1])
     floor_group.add(floor)
 
-# --- Breakable tiles ---
+# --- BREAKABLE TILES ---
 breakablePos = [(2028, 460), (2078, 460), (2128, 460), (2178, 460)]
 breakableTiles_group = pg.sprite.Group()
 for pos in breakablePos:
     breakableTile = BreakableTile(pos[0], pos[1])
     breakableTiles_group.add(breakableTile)
 
+# --- FLOATING TILES ---
+floatingPos = [(100, 200)]
+floatingTiles_group = pg.sprite.Group()
+for pos in floatingPos:
+    floatingTile = FloatingTile(pos[0], pos[1])
+    floatingTiles_group.add(breakableTile)
+
 # --- Camera ---
 camera = Camera(player, size[0], size[1], boundaries=(0, lvl_width))
 
 # --- Levels ---
 level1 = Level1(0, 0)
-##################################################### MAIN LOOP ######################################
+##################################################### MAIN LOOP ###############################################
 running = True
 while running:
     # --- Events
@@ -61,27 +68,40 @@ while running:
     # --- FLOOR ---
     collided_floor = pg.sprite.spritecollide(player, floor_group, False)
     closest_floor = min(floor_group, key=lambda tile: abs(tile.rect.centerx - player.rect.centerx))
-    if player.rect.colliderect(closest_floor.rect):
-        player.vertical_velocity = 0
-        player.y = closest_floor.rect.top - player.rect.height
-        player.jumpCheck = False
-    else:
-        # Apply gravity if no collision
-        player.vertical_velocity += gravity
-        player.y += player.vertical_velocity
-    # Prevent overshooting the floor during collision
-    if collided_floor:
-        for floor in collided_floor:
-            player.y = min(player.y, floor.rect.top - player.rect.height)
+    if not 1975 < player.x < 2200:
+        if player.rect.colliderect(closest_floor.rect):
+            player.vertical_velocity = 0
+            player.y = closest_floor.rect.top - player.rect.height
+            player.jumpCheck = False
+        else:
+            # Apply gravity if no collision
+            player.vertical_velocity += gravity
+            player.y += player.vertical_velocity
+        # Prevent overshooting the floor during collision
+        if collided_floor:
+            for floor in collided_floor:
+                player.y = min(player.y, floor.rect.top - player.rect.height)
 
     # --- BREAKABLE TILES ---
-    if 2000 < player.x < 2200:
-        collided_breakableTile = pg.sprite.spritecollide(player, breakableTiles_group, False)
-        closest_breakableTile = min(breakableTiles_group, key=lambda tile: abs(tile.rect.centerx - player.rect.centerx))
+    collided_breakableTile = pg.sprite.spritecollide(player, breakableTiles_group, False)
+    closest_breakableTile = min(breakableTiles_group, key=lambda tile: abs(tile.rect.centerx - player.rect.centerx))
+    if 1975 < player.x < 2210:
         if player.rect.colliderect(closest_breakableTile.rect):
             player.vertical_velocity = 0
-            player.y = closest_breakableTIle.rect.top - player.rect.height
+            player.y = closest_breakableTile.rect.top - player.rect.height
             player.jumpCheck = False
+
+            # --- BREAK LOGIC --- 
+            if closest_breakableTile.timer_start is None:
+                # Start the timer for this tile
+                closest_breakableTile.timer_start = pg.time.get_ticks()
+            else:
+                current_time = pg.time.get_ticks()
+                if current_time - closest_breakableTile.timer_start >= closest_breakableTile.removal_duration:
+                    # Remove the tile after the timer ends
+                    breakableTiles_group.remove(closest_breakableTile)
+                    breakableTile.timer_start = None
+                    breakableTile.collided_object = None
         else:
             # Apply gravity if no collision
             player.vertical_velocity += gravity
@@ -90,10 +110,11 @@ while running:
         if collided_breakableTile:
             for floor in collided_breakableTile:
                 player.y = min(player.y, floor.rect.top - player.rect.height)
+
 ############################################### INPUT ###############################################
     # --- Timer for animation handling ---
     dt = clock.get_time() / 1000
-    print(player.x)
+    print((player.x, player.y))
     keys = pg.key.get_pressed()
     if keys[pg.K_LEFT]:
         player.x -= player.horizontal_speed
@@ -106,7 +127,8 @@ while running:
     else:
         player.stop_animation()
 
-    # --- Jumping logic
+############################################### LOGIC ###############################################
+    # --- JUMPING LOGIC ---
     if collided_floor or collided_breakableTile and not player.canJump:
         if keys[pg.K_x]:
             player.canJump = True
@@ -115,6 +137,9 @@ while running:
         jumpCheck = True
     if player.rect.colliderect(closest_floor.rect) and jumpCheck:
         jumpCheck = False
+
+    # --- BREAKABLE TILE BREAKING LOGIC ---
+
 
     player.update_position()
     camera.update()
@@ -126,13 +151,16 @@ while running:
         # --- PLAYMAPS ---
     level1.render(screen, camera)
 
-    # --- PLAYER AND OBJECTS ---
+    # --- OBJECTS ---
     for tile in breakableTiles_group:
         adjusted_btile_rect = camera.apply(tile.rect)
         screen.blit(tile.image, adjusted_btile_rect.topleft)
     for floor in floor_group:
         adjusted_floor_rect = camera.apply(floor.rect)
         screen.blit(floor.image, adjusted_floor_rect.topleft)
+    for floatingtile in floatingTiles_group:
+        adjusted_ftile_rect = camera.apply(floatingtile.rect)
+        screen.blit(floatingtile.image, adjusted_ftile_rect.topleft)
 
     
     # --- PLAYER ---
