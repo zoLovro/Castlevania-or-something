@@ -21,7 +21,7 @@ clock = pg.time.Clock()
 gravity = 0.8
 
 # --- Player
-player = Player(100, 400)
+player = Player(900, 0)
 player_collision = False
 moving_right = False
 moving_left = False
@@ -45,11 +45,11 @@ for pos in breakablePos:
     breakableTiles_group.add(breakableTile)
 
 # --- FLOATING TILES ---
-floatingPos = [(100, 200)]
+floatingPos = [(965 + i * 50, 220) for i in range(6)]
 floatingTiles_group = pg.sprite.Group()
 for pos in floatingPos:
     floatingTile = FloatingTile(pos[0], pos[1])
-    floatingTiles_group.add(breakableTile)
+    floatingTiles_group.add(floatingTile)
 
 # --- Camera ---
 camera = Camera(player, size[0], size[1], boundaries=(0, lvl_width))
@@ -68,7 +68,7 @@ while running:
     # --- FLOOR ---
     collided_floor = pg.sprite.spritecollide(player, floor_group, False)
     closest_floor = min(floor_group, key=lambda tile: abs(tile.rect.centerx - player.rect.centerx))
-    if not 1975 < player.x < 2200:
+    if not 1975 < player.x < 2200 and not player.y < 280:
         if player.rect.colliderect(closest_floor.rect):
             player.vertical_velocity = 0
             player.y = closest_floor.rect.top - player.rect.height
@@ -81,6 +81,23 @@ while running:
         if collided_floor:
             for floor in collided_floor:
                 player.y = min(player.y, floor.rect.top - player.rect.height)
+
+    # --- PLATFORMS --- 
+    collided_platform = pg.sprite.spritecollide(player, floatingTiles_group, False)
+    closest_platform = min(floatingTiles_group, key=lambda tile: abs(tile.rect.centerx - player.rect.centerx))
+    if player.y < 280:
+        if player.rect.colliderect(closest_platform.rect):
+            player.vertical_velocity = 0
+            player.y = closest_platform.rect.top - player.rect.height
+            player.jumpCheck = False
+        else:
+            # Apply gravity if no collision
+            player.vertical_velocity += gravity
+            player.y += player.vertical_velocity
+            # Prevent overshooting the floor during collision
+            if collided_platform:
+                for platform in collided_platform:
+                    player.y = min(player.y, platform.rect.top - player.rect.height)
 
     # --- BREAKABLE TILES ---
     collided_breakableTile = pg.sprite.spritecollide(player, breakableTiles_group, False)
@@ -129,7 +146,7 @@ while running:
 
 ############################################### LOGIC ###############################################
     # --- JUMPING LOGIC ---
-    if collided_floor or collided_breakableTile and not player.canJump:
+    if collided_floor or collided_breakableTile or collided_platform and not player.canJump:
         if keys[pg.K_x]:
             player.canJump = True
     if player.canJump:
@@ -148,8 +165,6 @@ while running:
     # --- BACKGROUND --- 
     screen.fill(BLACK)
 
-        # --- PLAYMAPS ---
-    level1.render(screen, camera)
 
     # --- OBJECTS ---
     for tile in breakableTiles_group:
@@ -162,6 +177,8 @@ while running:
         adjusted_ftile_rect = camera.apply(floatingtile.rect)
         screen.blit(floatingtile.image, adjusted_ftile_rect.topleft)
 
+    # --- PLAYMAPS ---
+    level1.render(screen, camera)
     
     # --- PLAYER ---
     player.render(screen, camera)

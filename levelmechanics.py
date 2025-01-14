@@ -3,6 +3,7 @@ from pngs import rectangle_png
 ############################################### IMAGES ###############################################
 breakable_tile = pg.image.load("data/pngs/objects/breakableTile.png")
 floating_tile = pg.image.load("data/pngs/objects/floatingTile.png")
+stairs_tile = pg.image.load("data/pngs/objects/stairTile.png") 
 
 ############################################### CLASSES ###############################################
 class Floor(pg.sprite.Sprite):
@@ -41,8 +42,16 @@ class BreakableTile(pg.sprite.Sprite):
         screen.blit(self.image, render_rect.topleft)
 
 class Stairs(pg.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, height):
         super().__init__()
+        self.image = stairs_tile
+        self.rect = self.image.get_rect()
+
+        self.x = x
+        self.y = y
+        self.rect.topleft = (x, y)
+
+        self.active = False # If player is on stairs
 
 class FloatingTile(pg.sprite.Sprite):
     def __init__(self, x, y):
