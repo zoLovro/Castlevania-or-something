@@ -1,7 +1,7 @@
 import pygame as pg
 from classes import Player, Camera
 from levels import Level1
-from levelmechanics import BreakableTile, Floor, FloatingTile
+from levelmechanics import BreakableTile, Floor, FloatingTile, Stairs, generate_stair_pattern
 from pngs import idle_png
 
 pg.init()
@@ -50,6 +50,14 @@ floatingTiles_group = pg.sprite.Group()
 for pos in floatingPos:
     floatingTile = FloatingTile(pos[0], pos[1])
     floatingTiles_group.add(floatingTile)
+
+# --- STAIRS ---
+stairsPos = generate_stair_pattern(300, 300, 40, 40, 10)
+print(stairsPos)
+stairs_group = pg.sprite.Group()
+for stair in stairsPos:
+    stairs = Stairs(pos[0], pos[1])
+    stairs_group.add(stairs)
 
 # --- Camera ---
 camera = Camera(player, size[0], size[1], boundaries=(0, lvl_width))
@@ -131,7 +139,7 @@ while running:
 ############################################### INPUT ###############################################
     # --- Timer for animation handling ---
     dt = clock.get_time() / 1000
-    print((player.x, player.y))
+    #print((player.x, player.y))
     keys = pg.key.get_pressed()
     if keys[pg.K_LEFT]:
         player.x -= player.horizontal_speed
@@ -176,6 +184,9 @@ while running:
     for floatingtile in floatingTiles_group:
         adjusted_ftile_rect = camera.apply(floatingtile.rect)
         screen.blit(floatingtile.image, adjusted_ftile_rect.topleft)
+    for stair in stairs_group:
+        adjusted_ftile_rect = camera.apply(stairs.rect)
+        screen.blit(stairs.image, adjusted_ftile_rect.topleft)
 
     # --- PLAYMAPS ---
     level1.render(screen, camera)
@@ -185,6 +196,5 @@ while running:
 
     pg.display.flip()
     clock.tick(60)
-
 
 pg.quit()
