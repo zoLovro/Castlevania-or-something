@@ -56,7 +56,7 @@ stairsPos = generate_stair_pattern(300, 300, 40, 40, 10)
 print(stairsPos)
 stairs_group = pg.sprite.Group()
 for stair in stairsPos:
-    stairs = Stairs(pos[0], pos[1])
+    stairs = Stairs(stair[0], stair[1])
     stairs_group.add(stairs)
 
 # --- Camera ---
@@ -173,6 +173,8 @@ while running:
     # --- BACKGROUND --- 
     screen.fill(BLACK)
 
+    # --- PLAYMAPS ---
+    level1.render(screen, camera)
 
     # --- OBJECTS ---
     for tile in breakableTiles_group:
@@ -185,11 +187,8 @@ while running:
         adjusted_ftile_rect = camera.apply(floatingtile.rect)
         screen.blit(floatingtile.image, adjusted_ftile_rect.topleft)
     for stair in stairs_group:
-        adjusted_ftile_rect = camera.apply(stairs.rect)
-        screen.blit(stairs.image, adjusted_ftile_rect.topleft)
-
-    # --- PLAYMAPS ---
-    level1.render(screen, camera)
+        adjusted_stile_rect = camera.apply(stair.rect)
+        screen.blit(stair.image, adjusted_stile_rect.topleft)
     
     # --- PLAYER ---
     player.render(screen, camera)
