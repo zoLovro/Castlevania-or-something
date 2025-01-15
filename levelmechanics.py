@@ -60,12 +60,15 @@ class Stairs(pg.sprite.Sprite):
 def generate_stair_pattern(start_x, start_y, hx, hy, count):
     coordinates = []
     coordinates.append((start_x,start_y))
-    for x in range(1,count,1):
-        if x%3 == 2:
-            coordinates.append((coordinates[x-1][0],coordinates[x-1][1]-hy))
+    count += (count//3) + 1
+    deljeno = 0
+    for x in range(1,count):
+        if x % 3 == 2:
+            coordinates.append((coordinates[x - 1][0], coordinates[x - 1][1] - hy))
+            deljeno += 2
         else:
-            x = start_x+hx*x
-            coordinates.append((x, coordinates[x-1][1]))
+            xcord = start_x + hx * (x - deljeno)
+            coordinates.append((xcord, coordinates[x - 1][1]))
     return coordinates
 
 class FloatingTile(pg.sprite.Sprite):

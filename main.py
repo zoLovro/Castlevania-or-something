@@ -52,7 +52,7 @@ for pos in floatingPos:
     floatingTiles_group.add(floatingTile)
 
 # --- STAIRS ---
-stairsPos = generate_stair_pattern(300, 300, 40, 40, 10)
+stairsPos = generate_stair_pattern(680, 495, 20, 20, 30)
 print(stairsPos)
 stairs_group = pg.sprite.Group()
 for stair in stairsPos:
