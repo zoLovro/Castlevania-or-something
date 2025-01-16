@@ -71,6 +71,23 @@ def generate_stair_pattern(start_x, start_y, hx, hy, count):
             coordinates.append((xcord, coordinates[x - 1][1]))
     return coordinates
 
+def generate_reverse_stair_pattern(start_x, start_y, hx, hy, count):
+    coordinates = []
+    coordinates.append((start_x, start_y))
+    count += (count // 3) + 1
+    deljeno = 0
+
+    for x in range(1, count):
+        if x % 3 == 2:
+            # Move vertically downwards
+            coordinates.append((coordinates[x - 1][0], coordinates[x - 1][1] - hy))
+            deljeno += 2
+        else:
+            # Move horizontally to the left
+            xcord = start_x - hx * (x - deljeno)
+            coordinates.append((xcord, coordinates[x - 1][1]))
+
+    return coordinates
 class FloatingTile(pg.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()

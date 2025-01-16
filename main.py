@@ -1,7 +1,7 @@
 import pygame as pg
 from classes import Player, Camera
 from levels import Level1
-from levelmechanics import BreakableTile, Floor, FloatingTile, Stairs, generate_stair_pattern
+from levelmechanics import BreakableTile, Floor, FloatingTile, Stairs, generate_stair_pattern, generate_reverse_stair_pattern
 from pngs import idle_png
 
 pg.init()
@@ -52,7 +52,9 @@ for pos in floatingPos:
     floatingTiles_group.add(floatingTile)
 
 # --- STAIRS ---
-stairsPos = generate_stair_pattern(680, 495, 20, 20, 30)
+stairsPos = generate_stair_pattern(645, 500, 25, 25, 26)
+secondStair = (generate_reverse_stair_pattern(1560, 500, 25, 25, 26))
+stairsPos.extend(secondStair[::-1])
 print(stairsPos)
 stairs_group = pg.sprite.Group()
 for stair in stairsPos:
@@ -71,6 +73,26 @@ while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
+
+############################################### INPUT ###############################################
+    # --- Timer for animation handling ---
+    dt = clock.get_time() / 1000
+    #print((player.x, player.y))
+    keys = pg.key.get_pressed()
+    if keys[pg.K_LEFT]:
+        player.x -= player.horizontal_speed
+        moving = True
+        player.walk_left_animate(dt)
+    elif keys[pg.K_RIGHT]:
+        player.x += player.horizontal_speed
+        moving = True
+        player.walk_right_animate(dt)
+    elif keys[pg.K_UP]:
+        stairButton = True
+    else:
+        stairButton = False
+        player.stop_animation()
+    #print(stairButton)
 
 ############################################### COLLISION LOGIC ###############################################
     # --- FLOOR ---
@@ -136,22 +158,18 @@ while running:
             for floor in collided_breakableTile:
                 player.y = min(player.y, floor.rect.top - player.rect.height)
 
-############################################### INPUT ###############################################
-    # --- Timer for animation handling ---
-    dt = clock.get_time() / 1000
-    #print((player.x, player.y))
-    keys = pg.key.get_pressed()
-    if keys[pg.K_LEFT]:
-        player.x -= player.horizontal_speed
-        moving = True
-        player.walk_left_animate(dt)
-    elif keys[pg.K_RIGHT]:
-        player.x += player.horizontal_speed
-        moving = True
-        player.walk_right_animate(dt)
-    else:
-        player.stop_animation()
-
+    # --- STAIRS ---
+    collided_stair = pg.sprite.spritecollide(player, stairs_group, False)
+    closest_stair = min(stairs_group, key=lambda tile: abs(tile.rect.centerx - player.rect.centerx))
+    if stairButton and player.y < closest_stair.rect.top:
+        if player.rect.colliderect(closest_stair.rect):
+            player.vertical_velocity = 0
+            player.y = closest_stair.rect.top - player.rect.height
+            player.jumpCheck = False
+        else:
+            # Apply gravity if no collision
+            player.vertical_velocity += gravity
+            player.y += player.vertical_velocity
 ############################################### LOGIC ###############################################
     # --- JUMPING LOGIC ---
     if collided_floor or collided_breakableTile or collided_platform and not player.canJump:
@@ -163,9 +181,6 @@ while running:
     if player.rect.colliderect(closest_floor.rect) and jumpCheck:
         jumpCheck = False
 
-    # --- BREAKABLE TILE BREAKING LOGIC ---
-
-
     player.update_position()
     camera.update()
 
@@ -173,7 +188,7 @@ while running:
     # --- BACKGROUND --- 
     screen.fill(BLACK)
 
-    # --- PLAYMAPS ---
+    # # --- PLAYMAPS ---
     level1.render(screen, camera)
 
     # --- OBJECTS ---
@@ -190,6 +205,9 @@ while running:
         adjusted_stile_rect = camera.apply(stair.rect)
         screen.blit(stair.image, adjusted_stile_rect.topleft)
     
+    # --- PLAYMAPS ---
+    #level1.render(screen, camera)
+
     # --- PLAYER ---
     player.render(screen, camera)
 
